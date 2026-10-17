@@ -880,7 +880,7 @@ private final class Embedder: @unchecked Sendable {
 
     /// 模型资产还没下好：回 nil（这次先只用关键词），顺手请求下载，下次就有了
     func vector(_ text: String, lang: String) -> [Double]? {
-        if #unavailable(iOS 17.0) { return nil }   // 16：没有上下文向量，只用关键词
+        guard #available(iOS 17.0, *) else { return nil }   // 16：没有上下文向量，只用关键词
         return vector17(text, lang: lang)
     }
 

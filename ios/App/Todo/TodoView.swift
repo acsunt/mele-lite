@@ -358,8 +358,7 @@ struct PlacesView: View {
     @State private var name = ""
     @State private var pin: CLLocationCoordinate2D?
     @State private var radius = 150.0
-    // iOS17 的 Map(position:)，16 走旧式 Map(coordinateRegion:)：双份状态，各用各的
-    @State private var camera: MapCameraPosition = .userLocation(fallback: .automatic)
+    // iOS17 的 Map(position:) 里相机由 PlaceMapPicker17 自己管；16 走 legacyRegion
     @State private var legacyRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 30.66, longitude: 104.07),
                                                          latitudinalMeters: 800, longitudinalMeters: 800)
     @State private var locating = false
@@ -391,13 +390,13 @@ struct PlacesView: View {
                     }
                     .disabled(locating)
                     if #available(iOS 17.0, *) {
-                        PlaceMapPicker17(camera: $camera, pin: $pin,
+                        PlaceMapPicker17(pin: $pin,
                                          name: name, radius: radius)
                             .frame(height: 220)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     } else {
                         // 16：旧式 Map，点的位置用手势换算
-                        LegacyPickerMap(region: $legacyRegion, pin: $pin)
+                        LegacyPickerMap(region: $legacyRegion, pin: $pin, radius: radius)
                             .frame(height: 220)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
@@ -438,7 +437,6 @@ struct PlacesView: View {
         }
         pin = loc.coordinate
         let region = MKCoordinateRegion(center: loc.coordinate, latitudinalMeters: 800, longitudinalMeters: 800)
-        camera = .region(region)
         legacyRegion = region
         error = nil
     }
@@ -468,7 +466,7 @@ struct PlacesView: View {
 @available(iOS 17.0, *)
 private struct PlaceMapPicker17: View {
     @EnvironmentObject private var theme: AppTheme
-    @Binding var camera: MapCameraPosition
+    @State private var camera: MapCameraPosition = .userLocation(fallback: .automatic)
     @Binding var pin: CLLocationCoordinate2D?
     let name: String
     let radius: Double
@@ -491,6 +489,7 @@ private struct PlaceMapPicker17: View {
 private struct LegacyPickerMap: UIViewRepresentable {
     @Binding var region: MKCoordinateRegion
     @Binding var pin: CLLocationCoordinate2D?
+    let radius: Double
 
     func makeUIView(context: Context) -> MKMapView {
         let m = MKMapView()
