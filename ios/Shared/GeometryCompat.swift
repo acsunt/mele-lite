@@ -240,6 +240,10 @@ struct PageProgressCompat16: ViewModifier {
 private struct ScrollMetricsReader: UIViewRepresentable {
     let onChange: ([CGFloat]) -> Void
 
+    init(onChange: @escaping ([CGFloat]) -> Void) {
+        self.onChange = onChange
+    }
+
     func makeUIView(context: Context) -> UIView {
         let v = UIView()
         v.backgroundColor = .clear

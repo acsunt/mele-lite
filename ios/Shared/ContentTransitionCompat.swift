@@ -19,9 +19,10 @@ extension ContentTransition {
 
 extension View {
     /// iOS17/18 的 containerBackground(_:for: .navigation)；16 上没有这个概念，什么都不做
+    /// （.navigation 这个 ContainerBackgroundPlacement 值本身是 18 才有的，门槛提到 18）
     @ViewBuilder
     func containerBackgroundCompat<S: ShapeStyle>(_ style: S) -> some View {
-        if #available(iOS 17.0, *) {
+        if #available(iOS 18.0, *) {
             self.containerBackground(style, for: .navigation)
         } else {
             self
