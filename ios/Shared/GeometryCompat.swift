@@ -255,12 +255,16 @@ private struct ScrollMetricsReader: UIViewRepresentable {
         context.coordinator.onChange = onChange
         context.coordinator.report()   // id(current) 换章重建后立报一次
     }
-    func makeCoordinator() -> Coordinator { Coordinator(self) }
+    func makeCoordinator() -> Coordinator { Coordinator(onChange: onChange) }
 
     final class Coordinator: NSObject {
         var onChange: ([CGFloat]) -> Void = { _ in }
         private var obs: NSKeyValueObservation?
         private weak var scroll: UIScrollView?
+
+        init(onChange: @escaping ([CGFloat]) -> Void) {
+            self.onChange = onChange
+        }
 
         deinit { obs?.invalidate() }
 
