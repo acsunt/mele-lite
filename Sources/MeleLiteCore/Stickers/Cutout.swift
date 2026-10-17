@@ -7,6 +7,7 @@ import Vision
 /// 抠主体：苹果系统自带的「抠出前景」（跟相册里长按把猫拎起来是同一个东西）。抠不出来返回 nil，调用方当整张照片用。
 public enum Cutout {
     public static func liftSubject(_ image: Data) async -> Data? {
+        guard #available(iOS 17.0, macOS 14.0, *) else { return nil }   // VNGenerateForegroundInstanceMaskRequest 是 17 的：低版本不抠，整张当照片
         guard let src = CGImageSourceCreateWithData(image as CFData, nil),
               let cg = CGImageSourceCreateImageAtIndex(src, 0, nil) else { return nil }
         let request = VNGenerateForegroundInstanceMaskRequest()
