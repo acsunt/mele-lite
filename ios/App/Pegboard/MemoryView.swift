@@ -82,7 +82,7 @@ struct MemoryView: View {
     private var diaryRow: some View {
         Button { NotificationCenter.default.post(name: .lumiOpenDiary, object: nil) } label: {
             HStack(spacing: 12) {
-                Image(systemName: "book.pages").font(Typo.icon(18)).foregroundStyle(theme.accentDeep)
+                Image(systemName: "book.fill").font(Typo.icon(18)).foregroundStyle(theme.accentDeep)
                 Text("日记").font(Typo.sans(Typo.Size.headline, .semibold)).foregroundStyle(theme.ink)
                 Spacer()
                 Image(systemName: "chevron.right").font(Typo.icon(12)).foregroundStyle(theme.inkFaint)

@@ -51,7 +51,7 @@ enum HomeApp: String, CaseIterable, Codable {
         case .calendar: "calendar"
         case .moments: "camera.aperture"
         case .drawer: "envelope.fill"
-        case .diary: "book.pages.fill"
+        case .diary: "book.fill"   // book.pages 是 17 的符号，16 上空白
         case .album: "photo.on.rectangle.angled"
         case .favorites: "heart.fill"
         case .record: "archivebox.fill"

@@ -153,7 +153,7 @@ enum PeekRoomName {
     static func icon(_ id: String) -> String {
         switch id {
         case "chats": "bubble.left.and.bubble.right"
-        case "diary": "book.pages"
+        case "diary": "book.fill"
         case "wallet": "wallet.pass"
         case "food": "fork.knife"
         case "album": "photo.on.rectangle"

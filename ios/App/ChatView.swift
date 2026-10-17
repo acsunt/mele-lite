@@ -596,7 +596,7 @@ struct ChatView: View {
                 Button {
                     fontScaleRaw = max(0.85, ((fontScaleRaw - 0.05) * 100).rounded() / 100)
                 } label: {
-                    Label("小一点", systemImage: "textformat.size.smaller")
+                    Label("小一点", systemImage: "textformat.alt")   // textformat.size.* 是 17 的符号
                 }
                 Menu {
                     Button {
@@ -615,7 +615,7 @@ struct ChatView: View {
                 Button {
                     fontScaleRaw = min(1.3, ((fontScaleRaw + 0.05) * 100).rounded() / 100)
                 } label: {
-                    Label("大一点", systemImage: "textformat.size.larger")
+                    Label("大一点", systemImage: "textformat")
                 }
             }
             .menuActionDismissBehavior(.disabled)
@@ -1937,7 +1937,7 @@ struct ActionCardChip: View {
 
     static func icon(_ kind: String) -> String {
         switch kind {
-        case "remember": return "brain"
+        case "remember": return "sparkles"   // brain 是 17 的符号
         case "search": return "magnifyingglass"
         case "manual": return "book"
         case "clock": return "alarm"
@@ -1946,7 +1946,7 @@ struct ActionCardChip: View {
         case "sticky": return "note.text"
         case "date": return "calendar"
         case "drawer": return "envelope"
-        case "diary": return "book.pages"
+        case "diary": return "book.fill"
         case "todo": return "checklist"
         case "moment": return "camera.aperture"
         case "place": return "figure.walk"
