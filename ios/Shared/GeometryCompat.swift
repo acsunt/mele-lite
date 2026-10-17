@@ -14,7 +14,7 @@ extension View {
         GeometryReader { geo in
             Color.clear
                 .onAppear { action(geo.frame(in: .global)) }
-                .onChange(of: geo.frame(in: .global)) { _, f in action(f) }
+                .onChange(of: geo.frame(in: .global)) { f in action(f) }
         }
         .overlay(self)
     }
@@ -37,7 +37,7 @@ extension View {
             GeometryReader { geo in
                 let visible = geo.frame(in: .global).intersects(CGRect(origin: .zero, size: UIScreen.main.bounds.size))
                 Color.clear.onAppear { action(visible) }
-                    .onChange(of: geo.frame(in: .global)) { _, f in
+                    .onChange(of: geo.frame(in: .global)) { f in
                         action(f.intersects(CGRect(origin: .zero, size: UIScreen.main.bounds.size)))
                     }
             }
@@ -105,7 +105,7 @@ struct OnScreenReader16: ViewModifier {
                 GeometryReader { geo in
                     let visible = geo.frame(in: .global).intersects(CGRect(origin: .zero, size: UIScreen.main.bounds.size))
                     Color.clear.onAppear { action(visible) }
-                        .onChange(of: geo.frame(in: .global)) { _, f in
+                        .onChange(of: geo.frame(in: .global)) { f in
                             action(f.intersects(CGRect(origin: .zero, size: UIScreen.main.bounds.size)))
                         }
                 }
