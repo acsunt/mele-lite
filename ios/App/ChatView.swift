@@ -187,9 +187,9 @@ struct ChatView: View {
                 if incognito && !isMoment { incognitoBanner }
                 if !altName.isEmpty && !isMoment { altBanner }
             }
-                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).maxY } action: { bottom in
+                .modifier(HeaderBottomReader16 { bottom in
                     if bottom != headerBottom { headerBottom = bottom }
-                }
+                })
         }
         // 它申请翻手机：屏幕中间弹出来，背后整屏模糊（Aporia 10-04：不做成卡片）
         .overlay {
@@ -487,7 +487,7 @@ struct ChatView: View {
                     }
                     .buttonStyle(.plain)
                     .padding(.trailing, -8)
-                    .contentTransition(.symbolEffect(.replace))
+                    .contentTransition(.symbolReplace16)
                 }
                 // 线下（长文）开着：一个小标，点一下回到日常（10-01 Aporia：「转线下」要一眼看得到、一点就切）
                 if longModeOn, !isMoment, group == nil {
@@ -2243,9 +2243,9 @@ private struct DraftField: View {
             .background {
                 // 只在高度真的变了时上报（一行变两行那种），不是每敲一个字都报
                 GeometryReader { geo in
-                    Color.clear.onChange(of: geo.size.height, initial: true) { _, h in
-                        onHeightChange(h)
-                    }
+                    Color.clear
+                        .onAppear { onHeightChange(geo.size.height) }
+                        .onChange(of: geo.size.height) { _, h in onHeightChange(h) }
                 }
             }
         }

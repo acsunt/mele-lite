@@ -4,3 +4,6 @@ ios/build*/
 ios/*.xcodeproj/
 xcuserdata/
 DerivedData/
+
+ipa-output/
+ipa-check/

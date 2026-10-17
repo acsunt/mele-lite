@@ -4,7 +4,7 @@ name: MeleLite
 options:
   bundleIdPrefix: com.example
   deploymentTarget:
-    iOS: "18.0"
+    iOS: "16.5"
   createIntermediateGroups: true
 
 packages:

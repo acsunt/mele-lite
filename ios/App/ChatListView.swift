@@ -433,9 +433,9 @@ final class ChatListController: UIViewController, UICollectionViewDelegate {
                 // 画出来之后要是跟量的时候不一样高（表情包 / 图片 / 歌卡是异步加载的，
                 // 量的时候还是占位符），报上来重排——不然图长出来会压在下一行上
                 // （2026-09-03 晚Aporia："表情包和信息叠在一起了"）
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { [weak self] height in
+                .modifier(RowHeightReader16 { [weak self] height in
                     self?.rowRendered(row, height: height)
-                }
+                })
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top))
         return UIHostingConfiguration { content }

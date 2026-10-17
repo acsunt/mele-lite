@@ -109,6 +109,7 @@ final class DeskStickerStore: ObservableObject {
 
     /// Vision 抠主体（iOS 17+）。抠不出来返回 nil，外面就整张当照片磁贴。
     nonisolated static func liftSubject(_ image: UIImage) -> UIImage? {
+        guard #available(iOS 17.0, *) else { return nil }   // VNGenerateForegroundInstanceMaskRequest 是 17 的：16 上直接不抠
         guard let cg = image.cgImage else { return nil }
         let request = VNGenerateForegroundInstanceMaskRequest()
         let handler = VNImageRequestHandler(cgImage: cg, orientation: .up, options: [:])

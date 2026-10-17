@@ -148,7 +148,7 @@ struct FoodReceiptOverlay: View {
                 .padding(.top, 70)
                 .padding(.bottom, 60)
                 .frame(maxWidth: .infinity)
-                .containerRelativeFrame(.vertical, alignment: .top) { h, _ in h }
+                .modifier(FullHeightFrame16())   // 17 的 containerRelativeFrame：16 用 GeometryReader 撑满
             }
             .scrollIndicators(.hidden)
             .contentShape(Rectangle())
@@ -368,37 +368,19 @@ struct ReceiptBookView: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ScrollView(.horizontal) {
-                        LazyHStack(spacing: 0) {
+                    // iOS 17 之前没有 scrollTargetBehavior(.paging)，退回 TabView 页翻（16 兼容）
+                    if #available(iOS 17.0, *) {
+                        receiptPagingReader
+                    } else {
+                        TabView(selection: $current) {
                             ForEach(book.receipts) { r in
-                                ZStack {
-                                    // 后面叠着的两张（只露个边）
-                                    ForEach([2, 1], id: \.self) { k in
-                                        Color(red: 0.99, green: 0.98, blue: 0.955)
-                                            .frame(width: 256, height: 300)
-                                            .mask(ZigzagEdges())
-                                            .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
-                                            .rotationEffect(.degrees(Double(k) * (k == 1 ? -2.5 : 3)))
-                                            .offset(x: CGFloat(k) * 5, y: CGFloat(k) * -6)
-                                    }
-                                    FoodReceiptPaper(receipt: r).frame(width: 256)
-                                        .contextMenu {
-                                            Button(role: .destructive) { withAnimation { book.remove(r) } } label: { Label("从卡包里拿掉", systemImage: "trash") }
-                                        }
-                                }
-                                .padding(.vertical, 40)
-                                .containerRelativeFrame(.horizontal)
-                                .scrollTransition(axis: .horizontal) { v, phase in
-                                    v.rotationEffect(.degrees(phase.value * 6)).scaleEffect(1 - abs(phase.value) * 0.08).opacity(1 - abs(phase.value) * 0.4)
-                                }
-                                .id(r.id)
+                                receiptCard(r)
+                                    .padding(.vertical, 40)
+                                    .tag(r.id)
                             }
                         }
-                        .scrollTargetLayout()
+                        .tabViewStyle(.page(indexDisplayMode: .never))
                     }
-                    .scrollTargetBehavior(.paging)
-                    .scrollIndicators(.hidden)
-                    .scrollPosition(id: $current)
                 }
             }
             .background(AppBackground())
@@ -407,6 +389,47 @@ struct ReceiptBookView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("关上") { dismiss() }.tint(theme.accent) } }
         }
         .environment(\.colorScheme, .light)
+    }
+
+    // iOS 17+ 的一页一张带转场效果的翻页（Shape 兼容分支在 body 里）
+    @available(iOS 17.0, *)
+    private var receiptPagingReader: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 0) {
+                ForEach(book.receipts) { r in
+                    receiptCard(r)
+                        .padding(.vertical, 40)
+                        .containerRelativeFrame(.horizontal)
+                        .scrollTransition(axis: .horizontal) { v, phase in
+                            v.rotationEffect(.degrees(phase.value * 6)).scaleEffect(1 - abs(phase.value) * 0.08).opacity(1 - abs(phase.value) * 0.4)
+                        }
+                        .id(r.id)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.paging)
+        .scrollIndicators(.hidden)
+        .scrollPosition(id: $current)
+    }
+
+    // 一张小票卡（叠着的两张 × 真正的小票）
+    private func receiptCard(_ r: FoodReceiptData) -> some View {
+        ZStack {
+            // 后面叠着的两张（只露个边）
+            ForEach([2, 1], id: \.self) { k in
+                Color(red: 0.99, green: 0.98, blue: 0.955)
+                    .frame(width: 256, height: 300)
+                    .mask(ZigzagEdges())
+                    .shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                    .rotationEffect(.degrees(Double(k) * (k == 1 ? -2.5 : 3)))
+                    .offset(x: CGFloat(k) * 5, y: CGFloat(k) * -6)
+            }
+            FoodReceiptPaper(receipt: r).frame(width: 256)
+                .contextMenu {
+                    Button(role: .destructive) { withAnimation { book.remove(r) } } label: { Label("从卡包里拿掉", systemImage: "trash") }
+                }
+        }
     }
 
     private var title: String {

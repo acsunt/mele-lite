@@ -415,7 +415,7 @@ struct FilmRollView: View {
                     )
                     .simultaneousGesture(SpatialTapGesture(coordinateSpace: .global).onEnded { pickOrDrop(at: $0.location, l, m, side) })
                     .frame(width: geo.size.width, height: rowH, alignment: .topLeading)
-                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { stripRow = $0 }
+                    .modifier(StripFrameReader16 { stripRow = $0 })
                     // 以第一张的中心为支点缩放，再把这个点从小打的位置挪到落点
                     .scaleEffect(landed ? 1 : scale,
                                  anchor: UnitPoint(x: to.x / geo.size.width, y: (FilmPile.tabH + m.cellH / 2) / rowH))

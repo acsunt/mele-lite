@@ -307,8 +307,18 @@ struct MemoryRoomView: View {
                     MemoryWebView(base: web.base, token: web.token, mode: .full(tab: tab)).id(web.base)
                         .ignoresSafeArea(edges: .bottom)
                 } else if failed {
-                    ContentUnavailableView("连上记忆库才能用", systemImage: "lock.fill",
-                                           description: Text("去 Me →「MCP 服务」接一个记忆库。"))
+                    if #available(iOS 17.0, *) {
+                        ContentUnavailableView("连上记忆库才能用", systemImage: "lock.fill",
+                                               description: Text("去 Me →「MCP 服务」接一个记忆库。"))
+                    } else {
+                        // iOS 16 没有 ContentUnavailableView：手搭一个同款
+                        VStack(spacing: 10) {
+                            Image(systemName: "lock.fill").font(.system(size: 34)).foregroundStyle(.secondary)
+                            Text("连上记忆库才能用").font(.headline)
+                            Text("去 Me →「MCP 服务」接一个记忆库。").font(.footnote).foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 } else {
                     ProgressView()
                 }
@@ -387,9 +397,7 @@ struct StarmapWidget: View {
         }
         .contentShape(Rectangle())
         // 主屏几页横着排、都挂着：滑到别的页就不在屏幕上了
-        .onGeometryChange(for: Bool.self) { proxy in
-            proxy.frame(in: .global).intersects(CGRect(origin: .zero, size: UIScreen.main.bounds.size))
-        } action: { onScreen = $0 }
+        .modifier(OnScreenReader16 { onScreen = $0 })
         .onTapGesture { if connected { open = true } }
         .task {
             let list = await MemoryLink.refresh(model.api)

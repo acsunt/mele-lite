@@ -96,7 +96,8 @@ struct VoiceRecordButton: View {
                 mic
             }
         }
-        .onChange(of: rec.recording || review != nil, initial: true) { _, on in active = on }
+        .onAppear { active = rec.recording || review != nil }
+        .onChange(of: rec.recording || review != nil) { _, on in active = on }
         .onChange(of: rec.recording) { _, on in
             if !on && locked && review == nil { review = rec.stop() ?? nil; if review == nil { locked = false } }   // 录满 2 分钟自己停
         }
