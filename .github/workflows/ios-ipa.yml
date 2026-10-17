@@ -1,0 +1,59 @@
+# 不用本地 Mac：在 GitHub 的 macOS 云机器上打包「未签名 IPA」。
+# 用法：仓库推到 GitHub → Actions 页手动跑这个 workflow → 在 Artifacts 里下载 IPA。
+# 拿到 IPA 后在 Windows 上用 Sideloadly（或 AltStore）+ 自己的 Apple ID 签名装到手机。
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    # README 要求 Xcode 26；macos-26 镜像自带（macos-latest 还是旧 Xcode，编不了）
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 生成 Xcode 工程
+        run: |
+          brew install xcodegen
+          cd ios
+          xcodegen generate
+          xcodebuild -version
+          xcodebuild -list -project MeleLite.xcodeproj
+
+      - name: Archive（不签名）
+        run: |
+          cd ios
+          xcodebuild \
+            -project MeleLite.xcodeproj \
+            -scheme MeleLite \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/MeleLite.xcarchive \
+            archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+          || xcodebuild \
+            -project MeleLite.xcodeproj \
+            -target MeleLite \
+            -configuration Release \
+            -sdk iphoneos \
+            SYMROOT=build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: 打包成 IPA
+        run: |
+          APP=$(find ios/build -type d -name '*.app' | head -n 1)
+          echo "找到 App：$APP"
+          mkdir -p ipa/Payload
+          cp -R "$APP" ipa/Payload/
+          cd ipa
+          zip -qry MeleLite-unsigned.ipa Payload
+          ls -lh MeleLite-unsigned.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MeleLite-unsigned-ipa
+          path: ipa/MeleLite-unsigned.ipa
