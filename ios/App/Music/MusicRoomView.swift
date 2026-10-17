@@ -223,7 +223,7 @@ private struct PicksTimeRow: View {
             if custom || !value.isEmpty {
                 DatePicker("", selection: $time, displayedComponents: .hourAndMinute)
                     .labelsHidden()
-                    .onChange(of: time) { _, t in save(Self.hm(t)) }
+                    .onChange(of: time) { t in save(Self.hm(t)) }
             } else {
                 Text(String(localized: "现在是起床后半小时")).font(Typo.sans(12.5)).foregroundStyle(theme.inkDim)
             }
@@ -332,7 +332,7 @@ private struct PickRow: View {
                 .lineLimit(1...4)
                 .padding(.horizontal, 10).padding(.vertical, 8)
                 .background(theme.ink.opacity(0.05), in: RoundedRectangle(cornerRadius: 10))
-                .onChange(of: pick.reason) { _, text in       // 打字停下 1 秒就存（照之前自用的 App）
+                .onChange(of: pick.reason) { text in       // 打字停下 1 秒就存（照之前自用的 App）
                     saveTask?.cancel()
                     let p = pick
                     saveTask = Task {

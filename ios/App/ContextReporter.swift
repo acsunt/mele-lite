@@ -51,7 +51,14 @@ final class ContextReporter: NSObject, ObservableObject, CLLocationManagerDelega
         case .weather, .place:
             if location.authorizationStatus == .notDetermined { location.requestWhenInUseAuthorization() }
         case .calendar:
-            _ = try? await events.requestFullAccessToEvents()
+            // iOS17 是 fullAccess；16 是一体的 requestAccess(to:)
+            if #available(iOS 17.0, *) {
+                _ = try? await events.requestFullAccessToEvents()
+            } else {
+                _ = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+                    events.requestAccess(to: .event) { ok, _ in cont.resume(returning: ok) }
+                }
+            }
         case .health:
             guard HKHealthStore.isHealthDataAvailable() else { return }
             let types: Set<HKObjectType> = [HKQuantityType(.stepCount), HKCategoryType(.sleepAnalysis)]
@@ -212,7 +219,14 @@ final class ContextReporter: NSObject, ObservableObject, CLLocationManagerDelega
     // MARK: 日历（接下来 3 天，只报标题和时间）
 
     private func reportCalendar() async {
-        guard EKEventStore.authorizationStatus(for: .event) == .fullAccess else { return }
+        // iOS17 查 fullAccess；16 查 .authorized（一体的）
+        let ok: Bool
+        if #available(iOS 17.0, *) {
+            ok = EKEventStore.authorizationStatus(for: .event) == .fullAccess
+        } else {
+            ok = EKEventStore.authorizationStatus(for: .event) == .authorized
+        }
+        guard ok else { return }
         let now = Date()
         let until = Calendar.current.date(byAdding: .day, value: 3, to: Calendar.current.startOfDay(for: now)) ?? now
         let found = PhoneCalendar.events(events, from: now, to: until)

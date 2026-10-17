@@ -489,6 +489,12 @@ struct WalletEntryEditor: View {
     }
     private var chosen: String { newTag.trimmingCharacters(in: .whitespaces).isEmpty ? tag : newTag.trimmingCharacters(in: .whitespaces) }
 
+    private var noteField: some View {
+        TextField(kind == "in" ? "从哪来的（可以不写）" : "买了什么（可以不写）", text: $note)
+            .font(Typo.sans(Typo.Size.body)).padding(12)
+            .background(RoundedRectangle(cornerRadius: Radii.control, style: .continuous).fill(Color.white.opacity(0.6)))
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -499,7 +505,7 @@ struct WalletEntryEditor: View {
                             Text("收入").tag("in")
                         }
                         .pickerStyle(.segmented)
-                        .onChange(of: kind) { _, k in tag = k == "in" ? (inTags.first ?? "零花钱") : (outTags.first ?? "吃饭") }
+                        .onChange(of: kind) { k in tag = k == "in" ? (inTags.first ?? "零花钱") : (outTags.first ?? "吃饭") }
                     }
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(kind == "in" ? "+" + symbol : symbol).font(Typo.number(Typo.Size.title)).foregroundStyle(theme.inkDim)
@@ -525,9 +531,7 @@ struct WalletEntryEditor: View {
                     TextField("或者写一个新标签（会存下来，下次直接点）", text: $newTag)
                         .font(Typo.sans(Typo.Size.callout)).padding(12)
                         .background(RoundedRectangle(cornerRadius: Radii.control, style: .continuous).fill(Color.white.opacity(0.6)))
-                    TextField(kind == "in" ? "从哪来的（可以不写）" : "买了什么（可以不写）", text: $note)
-                        .font(Typo.sans(Typo.Size.body)).padding(12)
-                        .background(RoundedRectangle(cornerRadius: Radii.control, style: .continuous).fill(Color.white.opacity(0.6)))
+                    noteField                                     // 拆出去：三目占位符让编译器超时
                     DatePicker("哪天", selection: $day, in: ...Date(), displayedComponents: .date)
                         .font(Typo.sans(Typo.Size.body))
                     if let error { Text(error).font(Typo.sans(Typo.Size.callout)).foregroundStyle(.red) }

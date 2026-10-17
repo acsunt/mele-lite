@@ -864,9 +864,10 @@ enum LocalMemorySelfTest {
 #endif
 
 // MARK: - 向量（苹果自带的 NLContextualEmbedding：按语言选模型，token 向量求平均再归一化）
+// NLContextualEmbedding 是 iOS17 的：16 上 Embedder 整个退化为「永远 nil」=只用关键词召回（lang() 照常）
 
 private final class Embedder: @unchecked Sendable {
-    private var models: [String: NLContextualEmbedding] = [:]
+    private var models: [String: Any] = [:]
     private var requested: Set<String> = []
     private let lock = NSLock()
 
@@ -879,10 +880,16 @@ private final class Embedder: @unchecked Sendable {
 
     /// 模型资产还没下好：回 nil（这次先只用关键词），顺手请求下载，下次就有了
     func vector(_ text: String, lang: String) -> [Double]? {
+        if #unavailable(iOS 17.0) { return nil }   // 16：没有上下文向量，只用关键词
+        return vector17(text, lang: lang)
+    }
+
+    @available(iOS 17.0, *)
+    private func vector17(_ text: String, lang: String) -> [Double]? {
         lock.withLock {
             let nl: NLLanguage = lang == "zh" ? .simplifiedChinese : .english
             let model: NLContextualEmbedding
-            if let m = models[lang] { model = m } else {
+            if let m = models[lang] as? NLContextualEmbedding { model = m } else {
                 guard let m = NLContextualEmbedding(language: nl) else { return nil }
                 models[lang] = m
                 model = m

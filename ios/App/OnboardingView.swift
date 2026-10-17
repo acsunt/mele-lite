@@ -113,7 +113,7 @@ struct OnboardingView: View {
                 .font(Typo.sans(Typo.Size.body))
                 .padding(12)
                 .cardSurface(radius: Radii.control)
-                .onChange(of: customRel) { _, v in if !v.isEmpty { relationship = "" } }
+                .onChange(of: customRel) { v in if !v.isEmpty { relationship = "" } }
             Text("之后都能改。").font(Typo.sans(Typo.Size.caption)).foregroundStyle(theme.inkFaint)
         }
     }

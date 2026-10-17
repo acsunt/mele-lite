@@ -83,7 +83,7 @@ struct FoodSearchSheet: View {
                 .padding(16)
             }
             .scrollDismissesKeyboard(.interactively)
-            .containerBackground(.clear, for: .navigation)
+            .containerBackgroundCompat(.clear)
             .navigationTitle("搜名字")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

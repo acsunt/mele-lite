@@ -558,7 +558,7 @@ enum StarPainter {
             ctx.fill(sparkle(pr.sx, pr.sy, R), with: .color(rgb.opacity(a)))
             ctx.fill(sparkle(pr.sx, pr.sy, R * 0.32), with: .color(.white.opacity(a * 0.75)))
             if p.isHub {
-                ctx.draw(Text(p.label).font(.system(size: 10, weight: .medium)).foregroundStyle(rgb.opacity(0.9)),
+                ctx.draw(Text(p.label).font(.system(size: 10, weight: .medium)).foregroundColor(rgb.opacity(0.9)),
                          at: CGPoint(x: pr.sx, y: pr.sy + R + 9))
             }
         }
@@ -572,7 +572,7 @@ enum StarPainter {
                                            center: CGPoint(x: w / 2, y: h / 2), startRadius: 0, endRadius: glow))
             ctx.stroke(heart(w / 2, h / 2, s), with: .color(starHeart), lineWidth: 1.3)
         } else if !centerLabel.isEmpty {
-            ctx.draw(Text(centerLabel).font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.white.opacity(0.85)),
+            ctx.draw(Text(centerLabel).font(.system(size: 13, weight: .semibold)).foregroundColor(Color.white.opacity(0.85)),
                      at: CGPoint(x: w / 2, y: h / 2))
         }
     }
@@ -605,7 +605,7 @@ struct LocalStarmapView: View {
                                      focus: pickedIndex, drawEdges: true, heartOn: stack.isEmpty && !scene.mine.isEmpty,
                                      centerLabel: centerLabel, lineColor: .white)
                 }
-                .onChange(of: t) { old, new in
+                .onChange(of: t) { new in
                     // 自转只在没人碰的时候走表（攒进 spinBase，拖动和看星时就停在原地）
                     if dragStart == nil && picked == nil { spinBase += (new - lastT) * 0.18 }
                     lastT = new
@@ -733,7 +733,7 @@ struct LocalStarGlobeView: View {
                 StarPainter.draw(&ctx, size: size, scene: scene, yaw: spin, pitch: -0.35, t: t,
                                  focus: nil, drawEdges: false, heartOn: !scene.mine.isEmpty, lineColor: .primary)
             }
-            .onChange(of: t) { old, new in
+            .onChange(of: t) { new in
                 if !paused { spin += (new - lastT) * 0.12 }
                 lastT = new
             }

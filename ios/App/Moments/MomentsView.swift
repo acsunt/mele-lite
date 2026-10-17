@@ -62,19 +62,13 @@ struct MomentsView: View {
                 }
             }
             .ignoresSafeArea(edges: .top)
-            .onScrollGeometryChange(for: CGFloat.self) { g in g.contentOffset.y + g.contentInsets.top } action: { _, y in
-                pull = max(0, -y)
-            }
-            .onScrollPhaseChange { old, new in
-                if old == .interacting, new != .interacting, pull > 70, !refreshing {
-                    refreshing = true
-                    Task {
-                        await store.load()
-                        try? await Task.sleep(for: .milliseconds(500))
-                        refreshing = false
-                    }
+            .modifier(PullToRefreshCompat16(pull: $pull, refreshing: $refreshing) {
+                Task {
+                    await store.load()
+                    try? await Task.sleep(for: .milliseconds(500))
+                    refreshing = false
                 }
-            }
+            })
             .scrollDismissesKeyboard(.interactively)
             .simultaneousGesture(TapGesture().onEnded {
                 if let open = menuFor { justClosed = (open, Date()) }
@@ -129,7 +123,7 @@ struct MomentsView: View {
             Button("从相册选一张") { pickingCover = true }
         }
         .photosPicker(isPresented: $pickingCover, selection: $coverPick, matching: .images)
-        .onChange(of: coverPick) { _, item in
+        .onChange(of: coverPick) { item in
             guard let item else { return }
             Task {
                 if let raw = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: raw),
@@ -473,6 +467,20 @@ struct MomentComposer: View {
     @State private var sending = false
     @FocusState private var focused: Bool
 
+    // 拆出去：LazyVGrid 列参数 + 图片格子里塞太多修饰符，编译器超时（Xcode 26 / 16 部署目标）
+    private var photoGridColumns: [GridItem] { Array(repeating: GridItem(.fixed(96), spacing: 6), count: 3) }
+
+    private func photoCell(_ img: UIImage, at i: Int) -> some View {
+        let remove = Button { images.remove(at: i) } label: {
+            Image(systemName: "xmark.circle.fill").foregroundStyle(.white, .black.opacity(0.5))
+        }
+        return Image(uiImage: img).resizable().scaledToFill()
+            .frame(width: 96, height: 96).clipped()
+            .overlay(alignment: .topTrailing) {
+                remove.padding(4)
+            }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -484,24 +492,17 @@ struct MomentComposer: View {
                         .frame(maxWidth: .infinity, minHeight: 110, alignment: .topLeading)
                         .contentShape(Rectangle())
                         .onTapGesture { focused = true }
-                    LazyVGrid(columns: Array(repeating: GridItem(.fixed(96), spacing: 6), count: 3),
+                    LazyVGrid(columns: photoGridColumns,
                               alignment: .leading, spacing: 6) {
                         ForEach(Array(images.enumerated()), id: \.offset) { i, img in
-                            Image(uiImage: img).resizable().scaledToFill()
-                                .frame(width: 96, height: 96).clipped()
-                                .overlay(alignment: .topTrailing) {
-                                    Button { images.remove(at: i) } label: {
-                                        Image(systemName: "xmark.circle.fill").foregroundStyle(.white, .black.opacity(0.5))
-                                    }
-                                    .padding(4)
-                                }
+                            photoCell(img, at: i)
                         }
                         if images.count < 9 {
                             PhotosPicker(selection: $picks, maxSelectionCount: 9 - images.count, matching: .images) {
                                 Image(systemName: "plus").font(.system(size: 26, weight: .light))
                                     .foregroundStyle(.secondary)
                                     .frame(width: 96, height: 96)
-                                    .background(.background.secondary)
+                                    .background(Color(UIColor.secondarySystemBackground))
                             }
                         }
                     }
@@ -527,7 +528,7 @@ struct MomentComposer: View {
                     .disabled(sending || (text.trimmingCharacters(in: .whitespaces).isEmpty && images.isEmpty))
                 }
             }
-            .onChange(of: picks) { _, items in
+            .onChange(of: picks) { items in
                 Task {
                     for item in items {
                         if let raw = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: raw) {
@@ -565,7 +566,7 @@ struct MomentActivityList: View {
                     Spacer()
                     Text(it.post ?? "").font(Typo.sans(11.5)).foregroundStyle(.secondary)
                         .lineLimit(3).frame(width: 64, height: 64, alignment: .topLeading)
-                        .padding(6).background(.background.secondary)
+                        .padding(6).background(Color(UIColor.secondarySystemBackground))
                 }
                 .padding(.vertical, 4)
             }

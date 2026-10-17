@@ -101,8 +101,8 @@ struct ListenTogetherView: View {
         .preferredColorScheme(.dark)
         .onAppear { Self.isOpen = true; openedAt = Date(); report() }
         .onDisappear { Self.isOpen = false }
-        .onChange(of: current?.id) { _, _ in report() }
-        .onChange(of: state.playbackStatus) { _, _ in report() }
+        .onChange(of: current?.id) { _ in report() }
+        .onChange(of: state.playbackStatus) { _ in report() }
         .onReceive(NotificationCenter.default.publisher(for: .lumiSongQueued)) { note in
             guard let song = note.userInfo?["song"] as? SongCardData else { return }
             Task {

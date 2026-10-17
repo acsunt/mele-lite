@@ -242,7 +242,7 @@ struct ChatView: View {
         .onAppear { chat.start() }
         .task { await favorites.loadIfNeeded(session.api) }
         .onDisappear { chat.stop() }
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { phase in
             // 切到后台就断开事件流（10-12 内测：挂起时连接还在，Host 以为你还看着，它的回话就不推送了）。
             // 回来是 后台 → inactive → active，最后一跳的 old 是 inactive，所以用自己记的标记判断，不看 old
             if phase == .background { wentBackground = true; chat.stop() }
@@ -258,7 +258,7 @@ struct ChatView: View {
                 moment = MomentTarget(id: id)
             }
         }
-        .onChange(of: chat.loaded) { _, loaded in
+        .onChange(of: chat.loaded) { loaded in
             if loaded, let anchor = momentAnchor { Task { await landOnMoment(anchor) } }
         }
         .sheet(isPresented: $showSearch) {
@@ -313,7 +313,7 @@ struct ChatView: View {
                     .presentationDetents([.medium, .large])
             }
             .photosPicker(isPresented: $photoPickerPresented, selection: $photoItems, maxSelectionCount: 9, matching: .images)
-            .onChange(of: photoItems) { _, items in
+            .onChange(of: photoItems) { items in
                 guard !items.isEmpty else { return }
                 Task {
                     var files: [(Data, String, String)] = []
@@ -371,7 +371,7 @@ struct ChatView: View {
             .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
                 keyboardUp = false
             }
-            .onChange(of: selecting) { _, isSelecting in
+            .onChange(of: selecting) { isSelecting in
                 listHandle.selectionModeChanged(selecting: isSelecting, firstSelected: selectedIDs.first)
             }
             #if LITE
@@ -2215,7 +2215,7 @@ private struct DraftField: View {
             }
         }
         // 提示字自己上色：系统默认的灰压在深色玻璃上几乎看不见
-        TextField("", text: $draft, prompt: Text(placeholder).foregroundStyle(skin.inkDim.opacity(0.8)), axis: .vertical)
+        TextField("", text: $draft, prompt: Text(placeholder).foregroundColor(skin.inkDim.opacity(0.8)), axis: .vertical)
             .lineLimit(1...4)
             // 不许被压回一行（被压扁之后它改成内部滚动，只剩最后一行看得见）
             .fixedSize(horizontal: false, vertical: true)
@@ -2245,11 +2245,11 @@ private struct DraftField: View {
                 GeometryReader { geo in
                     Color.clear
                         .onAppear { onHeightChange(geo.size.height) }
-                        .onChange(of: geo.size.height) { _, h in onHeightChange(h) }
+                        .onChange(of: geo.size.height) { h in onHeightChange(h) }
                 }
             }
         }
-        .onChange(of: showMentions) { _, _ in onHeightChange(0) }
+        .onChange(of: showMentions) { _ in onHeightChange(0) }
 
         }
         if let onVoice, !sendable {

@@ -286,7 +286,7 @@ struct TarotAskView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                 if choosesReader { readerRow }
                 TarotGlass(style: style, padding: 14) {
-                    TextField("", text: $question, prompt: Text("心里的问题……").foregroundStyle(style.inkFaint), axis: .vertical)
+                    TextField("", text: $question, prompt: Text("心里的问题……").foregroundColor(style.inkFaint), axis: .vertical)
                         .font(Fonts.body(15))
                         .foregroundStyle(style.ink)
                         .lineLimit(2...5)

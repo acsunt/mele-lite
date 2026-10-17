@@ -69,7 +69,7 @@ struct BookshelfView: View {
         }
         .photosPicker(isPresented: Binding(get: { coverFor != nil }, set: { if !$0 { coverFor = nil } }),
                       selection: $coverItem, matching: .images)
-        .onChange(of: coverItem) { _, item in
+        .onChange(of: coverItem) { item in
             guard let item, let b = coverFor else { return }
             Task {
                 if let raw = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: raw),

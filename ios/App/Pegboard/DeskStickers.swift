@@ -344,7 +344,7 @@ struct StickerShelf: View {
             .shadow(color: .black.opacity(0.12), radius: 6, y: 5)
         }
         .frame(width: Self.width, height: Self.height)
-        .onChange(of: pick) { _, item in
+        .onChange(of: pick) { item in
             guard let item else { return }
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {

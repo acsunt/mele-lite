@@ -70,7 +70,7 @@ struct ChatSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .font(Typo.icon(14))
                             .foregroundStyle(look.faint)
-                        TextField("", text: $query, prompt: Text("搜关键词…").foregroundStyle(look.faint))
+                        TextField("", text: $query, prompt: Text("搜关键词…").foregroundColor(look.faint))
                             .focused($focused)
                             .font(Typo.sans(Typo.Size.body))
                             .foregroundStyle(look.ink)

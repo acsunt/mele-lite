@@ -70,13 +70,7 @@ struct CalendarRoomView: View {
                     grid
                     legend
                     dayList
-                    Toggle(isOn: $showPhone) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("显示手机日历").font(Typo.sans(Typo.Size.body)).foregroundStyle(theme.ink)
-                            Text("只放你自己写的，订阅的节假日和生日不放；只看不改")
-                                .font(Typo.sans(Typo.Size.caption)).foregroundStyle(theme.inkDim)
-                        }
-                    }
+                    calendarToggle                    // 拆出去：Toggle 里塞中文双行 VStack 让编译器超时（Xcode 26 / 16 目标）
                     .padding(.top, 8)
                 }
                 .padding(20)
@@ -110,11 +104,21 @@ struct CalendarRoomView: View {
         }
         .environment(\.colorScheme, .light)
         .task { await load() }
-        .onChange(of: showPhone) { _, _ in Task { await loadPhone() } }
-        .onChange(of: month) { _, _ in Task { await loadPhone() } }
+        .onChange(of: showPhone) { _ in Task { await loadPhone() } }
+        .onChange(of: month) { _ in Task { await loadPhone() } }
     }
 
     private var mainName: String { model.companions.first?.name ?? "Ta" }
+
+    private var calendarToggle: some View {
+        Toggle(isOn: $showPhone) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("显示手机日历").font(Typo.sans(Typo.Size.body)).foregroundStyle(theme.ink)
+                Text("只放你自己写的，订阅的节假日和生日不放；只看不改")
+                    .font(Typo.sans(Typo.Size.caption)).foregroundStyle(theme.inkDim)
+            }
+        }
+    }
 
     // MARK: 月
 
@@ -279,10 +283,28 @@ struct CalendarRoomView: View {
 
     private func loadPhone() async {
         guard showPhone else { phone = []; return }
-        if EKEventStore.authorizationStatus(for: .event) != .fullAccess {
-            guard (try? await store.requestFullAccessToEvents()) == true else {
-                error = String(localized: "没拿到日历权限。去「设置 → Mele → 日历」打开。"); showPhone = false; return
+        // iOS17 拆成了 fullAccess / writeOnly；16 还是一体的 .authorized + requestAccess(to:)
+        let granted: Bool
+        if #available(iOS 17.0, *) {
+            if EKEventStore.authorizationStatus(for: .event) == .fullAccess {
+                granted = true
+            } else {
+                granted = (try? await store.requestFullAccessToEvents()) == true
             }
+        } else {
+            let status = EKEventStore.authorizationStatus(for: .event)
+            if status == .authorized {
+                granted = true
+            } else if status == .notDetermined {
+                granted = await withCheckedContinuation { cont in
+                    store.requestAccess(to: .event) { ok, _ in cont.resume(returning: ok) }
+                }
+            } else {
+                granted = false
+            }
+        }
+        if !granted {
+            error = String(localized: "没拿到日历权限。去「设置 → Mele → 日历」打开。"); showPhone = false; return
         }
         let start = cal.date(byAdding: .day, value: -7, to: month) ?? month
         let end = cal.date(byAdding: .month, value: 1, to: month).flatMap { cal.date(byAdding: .day, value: 7, to: $0) } ?? month

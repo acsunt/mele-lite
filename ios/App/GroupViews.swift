@@ -276,7 +276,7 @@ struct GroupSettingsView: View {
             if let g = group { name = g.name; rounds = Double(g.maxRounds); seesHistory = g.newMemberSeesHistory }
             await loadEstimate()
         }
-        .onChange(of: photo) { _, item in
+        .onChange(of: photo) { item in
             guard let item else { return }
             Task {
                 guard let data = try? await item.loadTransferable(type: Data.self) else { return }

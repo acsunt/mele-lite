@@ -525,9 +525,18 @@ final class ChatListController: UIViewController, UICollectionViewDelegate {
             return
         }
         if grew && wasNearBottom {
-            UIView.animate(springDuration: 0.2, bounce: 0.15, options: [.beginFromCurrentState, .allowUserInteraction]) {
-                self.applyInsets()
-                self.collectionView.contentOffset.y = self.maxOffsetY
+            if #available(iOS 17.0, *) {
+                UIView.animate(springDuration: 0.2, bounce: 0.15, options: [.beginFromCurrentState, .allowUserInteraction]) {
+                    self.applyInsets()
+                    self.collectionView.contentOffset.y = self.maxOffsetY
+                }
+            } else {
+                // iOS16：没有 springDuration 版，用传统 UISpringTimingParameters 起同款弹簧
+                let params = UISpringTimingParameters(dampingRatio: 0.85, initialVelocity: .zero)
+                UIView.animate(withDuration: 0.2, delay: 0, usingSpringWithDamping: 0.85, initialSpringVelocity: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
+                    self.applyInsets()
+                    self.collectionView.contentOffset.y = self.maxOffsetY
+                }
             }
         } else {
             applyInsets()
@@ -813,12 +822,16 @@ final class ChatListController: UIViewController, UICollectionViewDelegate {
         log("scrollToBottom animated:\(animated) target:\(target) content:\(collectionView.contentSize.height) inset:\(collectionView.contentInset) box:\(collectionView.bounds.height) bar:\(barHeight) kb:\(keyboardHeight)")
         if animated {
             // 来消息：SwiftUI 默认那条 withAnimation（response 0.55 的 spring）；自己发的 0.3
-            UIView.animate(springDuration: duration, bounce: 0, options: [.beginFromCurrentState, .allowUserInteraction]) {
-                self.collectionView.contentOffset.y = target
-            } completion: { [weak self] _ in
+            let run: () -> Void = { self.collectionView.contentOffset.y = target }
+            let done: (Bool) -> Void = { [weak self] _ in
                 // 半路被谁改了内容高度的话，落地补一刀
                 guard let self, Date() >= keyboardAnimatingUntil else { return }
                 clampIfOverscrolled()
+            }
+            if #available(iOS 17.0, *) {
+                UIView.animate(springDuration: duration, bounce: 0, options: [.beginFromCurrentState, .allowUserInteraction], animations: run, completion: done)
+            } else {
+                UIView.animate(withDuration: duration, delay: 0, usingSpringWithDamping: 1.0, initialSpringVelocity: 0, options: [.beginFromCurrentState, .allowUserInteraction], animations: run, completion: done)
             }
         } else {
             collectionView.contentOffset.y = target

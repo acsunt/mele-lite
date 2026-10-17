@@ -484,7 +484,7 @@ struct SlimSlider: View {
                     .offset(x: x)
             }
             .frame(maxHeight: .infinity)
-            .coordinateSpace(.named("slimTrack"))
+            .coordinateSpace(name: "slimTrack")
         }
         .frame(height: 28)
     }
@@ -529,7 +529,7 @@ struct ColorGridSheet: View {
                         .autocorrectionDisabled()
                         .submitLabel(.done)
                         .onSubmit(applyHex)
-                        .onChange(of: hex) { _, v in
+                        .onChange(of: hex) { v in
                             let clean = String(v.uppercased().filter { "0123456789ABCDEF".contains($0) }.prefix(6))
                             if clean != v { hex = clean }
                             if typing, clean.count == 6 { applyHex() } else { hexBad = false }
@@ -544,16 +544,21 @@ struct ColorGridSheet: View {
             // 方板：横着是饱和度，竖着是明度
             GeometryReader { geo in
                 let w = geo.size.width, ht = geo.size.height
-                ZStack(alignment: .topLeading) {
+                // 逐层拆开（合成一坨编译器会超时）
+                let base = ZStack(alignment: .topLeading) {
                     Color(hue: h, saturation: 1, brightness: 1)
                     LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .leading, endPoint: .trailing)
                     LinearGradient(colors: [.black.opacity(0), .black], startPoint: .top, endPoint: .bottom)
-                    Circle()
-                        .strokeBorder(Color.white, lineWidth: 3)
-                        .background(Circle().fill(current))
-                        .shadow(color: .black.opacity(0.35), radius: 2)
-                        .frame(width: 24, height: 24)
-                        .offset(x: sat * w - 12, y: (1 - bri) * ht - 12)
+                }
+                let knob = Circle()
+                    .strokeBorder(Color.white, lineWidth: 3)
+                    .background(Circle().fill(current))
+                    .shadow(color: .black.opacity(0.35), radius: 2)
+                    .frame(width: 24, height: 24)
+                    .offset(x: sat * w - 12, y: (1 - bri) * ht - 12)
+                ZStack(alignment: .topLeading) {
+                    base
+                    knob
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .contentShape(Rectangle())

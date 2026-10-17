@@ -17,7 +17,15 @@ final class VoiceRecorder: NSObject, ObservableObject {
     static let maxSeconds: Double = 120
 
     func start() async -> Bool {
-        let ok = await AVAudioApplication.requestRecordPermission()
+        // iOS17 才有 AVAudioApplication；16 走 AVAudioSession.requestRecordPermission
+        let ok: Bool
+        if #available(iOS 17.0, *) {
+            ok = await AVAudioApplication.requestRecordPermission()
+        } else {
+            ok = await withCheckedContinuation { (cont: CheckedContinuation<Bool, Never>) in
+                AVAudioSession.sharedInstance().requestRecordPermission { cont.resume(returning: $0) }
+            }
+        }
         guard ok else { return false }
         VoicePlayer.shared.stop()
         let s = AVAudioSession.sharedInstance()
@@ -97,8 +105,8 @@ struct VoiceRecordButton: View {
             }
         }
         .onAppear { active = rec.recording || review != nil }
-        .onChange(of: rec.recording || review != nil) { _, on in active = on }
-        .onChange(of: rec.recording) { _, on in
+        .onChange(of: rec.recording || review != nil) { on in active = on }
+        .onChange(of: rec.recording) { on in
             if !on && locked && review == nil { review = rec.stop() ?? nil; if review == nil { locked = false } }   // 录满 2 分钟自己停
         }
         .alert("要开麦克风权限", isPresented: $denied) { Button("好", role: .cancel) {} } message: {

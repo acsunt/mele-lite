@@ -120,7 +120,7 @@ struct PeopleRoomView: View {
                 store.api = model.api
                 await store.load()
             }
-            .onChange(of: store.source) { _, _ in Task { await store.load() } }
+            .onChange(of: store.source) { _ in Task { await store.load() } }
             .sheet(item: $editing) { t in
                 PersonEditView(store: store, person: t.person).environmentObject(model).environmentObject(theme)
             }

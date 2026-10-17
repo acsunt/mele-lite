@@ -288,6 +288,16 @@ struct FoodAddSheet: View {
         name: "Caramel Honey Macadamia", brand: "Connoisseur", kcal_100g: 262, protein_100g: 3.6,
         carbs_100g: 26.1, fat_100g: 15.8, serving: "1 serve (65 g)", kcal_serving: 170) : nil
     private static var demoScan: Bool { ProcessInfo.processInfo.arguments.contains("-foodScanDemo") }
+
+    private var addPhotosRow: some View {
+        HStack {
+            Label(photoDatas.isEmpty ? "加照片（可选，几张都行）" : "再加照片", systemImage: "camera")
+            Spacer()
+            if !photoDatas.isEmpty { Text("\(photoDatas.count) 张").font(Fonts.body(13)).foregroundStyle(.secondary) }
+        }
+        .padding(14)
+        .background(FoodSheetGlass.field, in: RoundedRectangle(cornerRadius: 14))
+    }
     @State private var scanMiss = false
     @State private var scanGrams: Double? = FoodAddSheet.demoScan ? 65 : nil
     @State private var shootingLabel = false
@@ -370,13 +380,7 @@ struct FoodAddSheet: View {
                         }
                     }
                     PhotosPicker(selection: $picks, maxSelectionCount: 0, matching: .images) {
-                        HStack {
-                            Label(photoDatas.isEmpty ? "加照片（可选，几张都行）" : "再加照片", systemImage: "camera")
-                            Spacer()
-                            if !photoDatas.isEmpty { Text("\(photoDatas.count) 张").font(Fonts.body(13)).foregroundStyle(.secondary) }
-                        }
-                        .padding(14)
-                        .background(FoodSheetGlass.field, in: RoundedRectangle(cornerRadius: 14))
+                        addPhotosRow                    // 拆出去：Label 三目 + 条件 Text 编译器超时
                     }
 
                     if filled.count <= 1 {
@@ -401,7 +405,7 @@ struct FoodAddSheet: View {
                 .padding(16)
             }
             .scrollDismissesKeyboard(.interactively)
-            .containerBackground(.clear, for: .navigation)   // 全屏时导航层别自己刷一层纯色
+            .containerBackgroundCompat(.clear)   // 全屏时导航层别自己刷一层纯色（17 的 API，16 无操作）
             .navigationTitle("+\(meal.rawValue)")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -411,7 +415,7 @@ struct FoodAddSheet: View {
                         .disabled((filled.isEmpty && photoDatas.isEmpty) || saving)   // 只拍了照片也能记（Aporia 09-29）
                 }
             }
-            .onChange(of: picks) { _, items in
+            .onChange(of: picks) { items in
                 guard !items.isEmpty else { return }
                 Task {
                     for item in items { if let d = await Self.jpeg(from: item) { photoDatas.append(d) } }
@@ -669,7 +673,7 @@ struct FoodEntrySheet: View {
                 }
             }
             .scrollContentBackground(.hidden)   // 升到全屏也保持玻璃
-            .containerBackground(.clear, for: .navigation)
+            .containerBackgroundCompat(.clear)
             .navigationTitle(entry.meal)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -699,7 +703,7 @@ struct FoodEntrySheet: View {
             text = entry.text; detail = entry.detail ?? ""; kcal = entry.kcal; protein = entry.protein; carbs = entry.carbs; fat = entry.fat
             photos = entry.photos
         }
-        .onChange(of: photoPicks) { _, items in
+        .onChange(of: photoPicks) { items in
             guard !items.isEmpty else { return }
             Task {
                 var datas: [Data] = []

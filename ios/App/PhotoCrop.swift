@@ -21,7 +21,7 @@ private struct PhotoImport: ViewModifier {
     func body(content: Content) -> some View {
         content
             .photosPicker(isPresented: $isPresented, selection: $item, matching: .images)
-            .onChange(of: item) { _, it in
+            .onChange(of: item) { it in
                 guard let it else { return }
                 Task {
                     if let data = try? await it.loadTransferable(type: Data.self), let img = UIImage(data: data) {
@@ -108,9 +108,9 @@ struct PhotoCropView: View {
                                               height: baseOffset.height + v.translation.height), box: box)
                     }
                     .onEnded { _ in baseOffset = offset }
-                    .simultaneously(with: MagnifyGesture()
+                    .simultaneously(with: MagnificationGesture()
                         .onChanged { v in
-                            scale = max(1, min(6, baseScale * v.magnification))
+                            scale = max(1, min(6, baseScale * v))
                             offset = clamp(offset, box: box)
                         }
                         .onEnded { _ in

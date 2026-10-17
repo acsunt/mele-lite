@@ -42,7 +42,7 @@ struct MemoryView: View {
             .scrollDisabled(editing)
         }
         .photosPicker(isPresented: $pickingCover, selection: $coverItem, matching: .images)
-        .onChange(of: coverItem) { _, item in
+        .onChange(of: coverItem) { item in
             Task {
                 guard let data = try? await item?.loadTransferable(type: Data.self), let img = UIImage(data: data) else { return }
                 let small = DeskStickerStore.normalized(img, maxSide: 900)
@@ -138,7 +138,7 @@ struct MemoryWidgets: View {
             }
             .buttonStyle(.plain)
         }
-        .onChange(of: picking) { _, item in
+        .onChange(of: picking) { item in
             Task {
                 defer { picking = nil }
                 guard let data = try? await item?.loadTransferable(type: Data.self), let img = UIImage(data: data) else { return }
@@ -221,7 +221,7 @@ struct PegboardWidget: View {
                 cover = small
             }
             .preference(key: InnerArrangeKey.self, value: editing)
-            .onChange(of: homeEditing) { _, on in if on { withAnimation(.spring(response: 0.3)) { editing = false } } }
+            .onChange(of: homeEditing) { on in if on { withAnimation(.spring(response: 0.3)) { editing = false } } }
             .sheet(isPresented: $showRecord) {
                 RecordHall()
                     .environmentObject(model).environmentObject(theme)

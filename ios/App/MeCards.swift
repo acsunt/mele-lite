@@ -73,7 +73,7 @@ struct ProfileCard: View {
                 }
                 Spacer()
             }
-            .onChange(of: pickedAvatar) { _, item in
+            .onChange(of: pickedAvatar) { item in
                 guard let item else { return }
                 Task {
                     if let data = try? await item.loadTransferable(type: Data.self) { avatars.set(.me, data: data) }

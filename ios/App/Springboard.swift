@@ -286,7 +286,7 @@ struct Springboard: View {
         }
         .overlay(alignment: .top) { if editing { editBar } }
         .onReceive(tick) { _ in edgeFlip() }
-        .onChange(of: editing) { _, on in
+        .onChange(of: editing) { on in
             if on { withAnimation(.easeInOut(duration: 0.13).repeatForever(autoreverses: true)) { wiggle = true } }
             else {
                 wiggle = false
@@ -360,8 +360,8 @@ struct Springboard: View {
             }
         }
         .onAppear { armTour() }
-        .onChange(of: model.chat) { _, _ in armTour() }
-        .onChange(of: model.listOpen) { _, _ in armTour() }
+        .onChange(of: model.chat) { _ in armTour() }
+        .onChange(of: model.listOpen) { _ in armTour() }
     }
 
     /// 聊天页那段看完、回到主屏时放一次（看过记本机；Me 里「再看一遍导览」会重新排上）
@@ -407,7 +407,7 @@ struct Springboard: View {
                 })
             .onPreferenceChange(InnerArrangeKey.self) { innerArranging = $0 }
             .onAppear { pageSize = geo.size }
-            .onChange(of: geo.size) { _, s in pageSize = s }
+            .onChange(of: geo.size) { s in pageSize = s }
         }
         .clipped()
     }

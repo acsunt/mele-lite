@@ -64,9 +64,7 @@ struct BookReaderView: View {
                 .padding(.bottom, 12)
             }
             .id(current)
-            .onScrollGeometryChange(for: [CGFloat].self) { g in
-                [g.contentOffset.y, g.contentSize.height, g.containerSize.height]
-            } action: { _, v in
+            .modifier(PageProgressCompat16 { v in
                 let h = max(v[2], 1)
                 let count = max(1, Int(ceil(v[1] / h)))
                 let p = min(count - 1, max(0, Int((v[0] + h * 0.3) / h)))
@@ -75,7 +73,7 @@ struct BookReaderView: View {
                     pageCount = count
                     Task { await report(seconds: 0) }
                 }
-            }
+            })
             bottomBar
         }
         .background { if let page = colors.page { page.ignoresSafeArea() } else { AppBackground() } }

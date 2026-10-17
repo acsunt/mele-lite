@@ -82,7 +82,7 @@ struct FoodDiaryView: View {
             }
         }
         .task { await store.loadDays(); await store.syncWatch() }
-        .onChange(of: path) { _, p in if p.isEmpty { Task { await store.loadDays(query: query) } } }
+        .onChange(of: path) { p in if p.isEmpty { Task { await store.loadDays(query: query) } } }
         .sheet(isPresented: $showSettings) {
             FoodSettingsView(store: store).environmentObject(theme)
         }

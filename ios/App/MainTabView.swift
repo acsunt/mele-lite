@@ -72,7 +72,7 @@ struct MainTabView: View {
             GeometryReader { geo in Color.clear.onAppear { screenW = geo.size.width } }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
-        .onChange(of: scenePhase) { _, phase in
+        .onChange(of: scenePhase) { phase in
             // 回前台：报「在」、天气 / 在哪 / 日程 / 步数（开了的那几样）；进后台停掉「在」的钟
             if phase == .active {
                 ContextReporter.shared.foreground(); PushDelegate.clearDelivered()
@@ -161,18 +161,31 @@ struct MainTabView: View {
     }
 
     private func closeList() {
-        withAnimation(Self.slide) { listX = screenW } completion: {
-            model.listOpen = false
-            listX = 0
+        let finish = {
+            self.model.listOpen = false
+            self.listX = 0
+        }
+        if #available(iOS 17.0, *) {
+            withAnimation(Self.slide) { listX = screenW } completion: { finish() }
+        } else {
+            // 16 没有动画完成回调：按 slide 时长（0.35s 默认 spring 折半保守取）延迟落账
+            withAnimation(Self.slide) { listX = screenW }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.32, execute: finish)
         }
     }
 
     private func closeChat() {
         guard let target = model.chat else { return }
-        withAnimation(Self.slide) { chatX = screenW } completion: {
-            model.chat = nil
-            chatX = 0
-            Task { await model.chatClosed(target) }
+        let finish = {
+            self.model.chat = nil
+            self.chatX = 0
+            Task { await self.model.chatClosed(target) }
+        }
+        if #available(iOS 17.0, *) {
+            withAnimation(Self.slide) { chatX = screenW } completion: { finish() }
+        } else {
+            withAnimation(Self.slide) { chatX = screenW }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.32, execute: finish)
         }
         if target.incognito {
             Task { try? await session.api.send("DELETE", "conversations/\(target.conversation.lowercased)") }

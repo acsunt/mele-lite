@@ -65,6 +65,24 @@ struct StickerRoomView: View {
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
 
+    private func stickerCellImage(_ s: StickerDTO) -> some View {
+        let check = Image(systemName: selected.contains(s.id) ? "checkmark.circle.fill" : "circle")
+            .font(Typo.icon(18)).foregroundStyle(selected.contains(s.id) ? theme.accentDeep : theme.inkFaint)
+            .background(Circle().fill(.white).padding(2))
+        return AuthImageView(urlPath: s.path, contentMode: .fit)
+            .frame(height: 78)
+            .frame(maxWidth: .infinity)
+            .opacity(selecting && !selected.contains(s.id) ? 0.55 : 1)
+            .overlay(alignment: .bottomTrailing) {
+                if !s.onlyFor.isEmpty && !selecting {
+                    Image(systemName: "person.fill").font(Typo.icon(10)).foregroundStyle(theme.accentDeep)
+                }
+            }
+            .overlay(alignment: .topTrailing) {
+                if selecting { check }
+            }
+    }
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -86,22 +104,7 @@ struct StickerRoomView: View {
                                     if selected.contains(s.id) { selected.remove(s.id) } else { selected.insert(s.id) }
                                 } else { editing = s }
                             } label: {
-                                AuthImageView(urlPath: s.path, contentMode: .fit)
-                                    .frame(height: 78)
-                                    .frame(maxWidth: .infinity)
-                                    .opacity(selecting && !selected.contains(s.id) ? 0.55 : 1)
-                                    .overlay(alignment: .bottomTrailing) {
-                                        if !s.onlyFor.isEmpty && !selecting {
-                                            Image(systemName: "person.fill").font(Typo.icon(10)).foregroundStyle(theme.accentDeep)
-                                        }
-                                    }
-                                    .overlay(alignment: .topTrailing) {
-                                        if selecting {
-                                            Image(systemName: selected.contains(s.id) ? "checkmark.circle.fill" : "circle")
-                                                .font(Typo.icon(18)).foregroundStyle(selected.contains(s.id) ? theme.accentDeep : theme.inkFaint)
-                                                .background(Circle().fill(.white).padding(2))
-                                        }
-                                    }
+                                stickerCellImage(s)          // 拆出去：两个 overlay 叠三目编译器超时
                             }
                             .buttonStyle(.plain)
                         }
@@ -141,7 +144,7 @@ struct StickerRoomView: View {
                 Button(String(localized: "删掉 \(selected.count) 张"), role: .destructive) { Task { await deleteSelected() } }
             }
             .photosPicker(isPresented: $picking, selection: $picks, maxSelectionCount: 20, matching: .images)
-            .onChange(of: picks) { _, items in
+            .onChange(of: picks) { items in
                 guard !items.isEmpty else { return }
                 Task { await upload(items) }
             }

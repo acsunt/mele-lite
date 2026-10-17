@@ -358,7 +358,10 @@ struct PlacesView: View {
     @State private var name = ""
     @State private var pin: CLLocationCoordinate2D?
     @State private var radius = 150.0
+    // iOS17 的 Map(position:)，16 走旧式 Map(coordinateRegion:)：双份状态，各用各的
     @State private var camera: MapCameraPosition = .userLocation(fallback: .automatic)
+    @State private var legacyRegion = MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 30.66, longitude: 104.07),
+                                                         latitudinalMeters: 800, longitudinalMeters: 800)
     @State private var locating = false
     @State private var error: String?
 
@@ -387,17 +390,17 @@ struct PlacesView: View {
                         Label(locating ? "正在找你在哪……" : "就是这里（用现在的位置）", systemImage: "location.fill")
                     }
                     .disabled(locating)
-                    MapReader { proxy in
-                        Map(position: $camera) {
-                            if let pin {
-                                Marker(name.isEmpty ? String(localized: "这里") : name, coordinate: pin)
-                                MapCircle(center: pin, radius: radius).foregroundStyle(theme.accentDeep.opacity(0.18))
-                            }
-                        }
-                        .onTapGesture { p in if let c = proxy.convert(p, from: .local) { pin = c } }
+                    if #available(iOS 17.0, *) {
+                        PlaceMapPicker17(camera: $camera, pin: $pin,
+                                         name: name, radius: radius)
+                            .frame(height: 220)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    } else {
+                        // 16：旧式 Map，点的位置用手势换算
+                        LegacyPickerMap(region: $legacyRegion, pin: $pin)
+                            .frame(height: 220)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .frame(height: 220)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     VStack(alignment: .leading) {
                         Text(String(localized: "方圆 \(Int(radius)) 米算到了")).font(Typo.sans(Typo.Size.callout))
                         Slider(value: $radius, in: 100...1000, step: 50)
@@ -434,7 +437,9 @@ struct PlacesView: View {
             return
         }
         pin = loc.coordinate
-        camera = .region(MKCoordinateRegion(center: loc.coordinate, latitudinalMeters: 800, longitudinalMeters: 800))
+        let region = MKCoordinateRegion(center: loc.coordinate, latitudinalMeters: 800, longitudinalMeters: 800)
+        camera = .region(region)
+        legacyRegion = region
         error = nil
     }
 
@@ -455,5 +460,102 @@ struct PlacesView: View {
             try await model.api.send("DELETE", "places/\(p.id)")
             await load()
         } catch { self.error = error.localizedDescription }
+    }
+}
+
+// MARK: - iOS 17+ 的地图选点（MapReader / Marker / MapCircle 都是 17 的）
+
+@available(iOS 17.0, *)
+private struct PlaceMapPicker17: View {
+    @EnvironmentObject private var theme: AppTheme
+    @Binding var camera: MapCameraPosition
+    @Binding var pin: CLLocationCoordinate2D?
+    let name: String
+    let radius: Double
+
+    var body: some View {
+        MapReader { proxy in
+            Map(position: $camera) {
+                if let pin {
+                    Marker(name.isEmpty ? String(localized: "这里") : name, coordinate: pin)
+                    MapCircle(center: pin, radius: radius).foregroundStyle(theme.accentDeep.opacity(0.18))
+                }
+            }
+            .onTapGesture { p in if let c = proxy.convert(p, from: .local) { pin = c } }
+        }
+    }
+}
+
+// MARK: - iOS 16 的地图选点：旧式 Map + 手势换算落点
+
+private struct LegacyPickerMap: UIViewRepresentable {
+    @Binding var region: MKCoordinateRegion
+    @Binding var pin: CLLocationCoordinate2D?
+
+    func makeUIView(context: Context) -> MKMapView {
+        let m = MKMapView()
+        m.delegate = context.coordinator
+        m.setRegion(region, animated: false)
+        m.showsUserLocation = true
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tap(_:)))
+        m.addGestureRecognizer(tap)
+        return m
+    }
+    func updateUIView(_ m: MKMapView, context: Context) {
+        context.coordinator.parent = self
+        // 程序设 region / pin 时跟过去（避免每次 update 都跳回，只在差得远时挪）
+        if abs(m.region.center.latitude - region.center.latitude) > 0.001
+            || abs(m.region.center.longitude - region.center.longitude) > 0.001 {
+            m.setRegion(region, animated: true)
+        }
+        context.coordinator.syncAnnotations(to: m, pin: pin, radius: radius)
+    }
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    final class Coordinator: NSObject, MKMapViewDelegate {
+        var parent: LegacyPickerMap
+        private var pinView: MKPointAnnotation?
+        private var circle: MKCircle?
+
+        init(_ parent: LegacyPickerMap) { self.parent = parent }
+
+        @objc func tap(_ g: UITapGestureRecognizer) {
+            guard let m = g.view as? MKMapView else { return }
+            let c = m.convert(g.location(in: m), toCoordinateFrom: m)
+            parent.pin = c
+        }
+
+        func syncAnnotations(to m: MKMapView, pin: CLLocationCoordinate2D?, radius: Double) {
+            if let pin {
+                if pinView == nil {
+                    let a = MKPointAnnotation()
+                    m.addAnnotation(a)
+                    pinView = a
+                }
+                pinView?.coordinate = pin
+                if circle == nil {
+                    let c = MKCircle(center: pin, radius: radius)
+                    m.addOverlay(c)
+                    circle = c
+                } else if circle!.radius != radius {
+                    m.removeOverlay(circle!)
+                    let c = MKCircle(center: pin, radius: radius)
+                    m.addOverlay(c)
+                    circle = c
+                }
+            } else if let c = circle {
+                m.removeOverlay(c)
+                m.removeAnnotation(pinView!)
+                circle = nil
+                pinView = nil
+            }
+        }
+
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            guard let circle = overlay as? MKCircle else { return MKOverlayRenderer(overlay: overlay) }
+            let r = MKCircleRenderer(circle: circle)
+            r.fillColor = UIColor.systemTeal.withAlphaComponent(0.18)
+            return r
+        }
     }
 }

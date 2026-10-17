@@ -351,7 +351,7 @@ struct CompanionSettingsView: View {
                 .environment(\.colorScheme, .light)
                 .presentationDetents([.medium, .large])
         }
-        .onChange(of: picked) { _, item in
+        .onChange(of: picked) { item in
             Task {
                 guard let data = try? await item?.loadTransferable(type: Data.self), let img = UIImage(data: data),
                       let jpg = img.squareCropped(to: 512).jpegData(compressionQuality: 0.88) else { return }
@@ -413,7 +413,7 @@ struct CompanionSettingsView: View {
                     TextField("比如：lumi_0417", text: $wechatDraft)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .font(Typo.sans(Typo.Size.body))
-                        .onChange(of: wechatDraft) { _, v in
+                        .onChange(of: wechatDraft) { v in
                             let w = v.trimmingCharacters(in: .whitespaces)
                             if w == (store.persona["wechat_id"] as? String ?? "") { wechatNote = nil; return }
                             if (6...20).contains(w.count), w.first?.isLetter == true, w.first?.isASCII == true,

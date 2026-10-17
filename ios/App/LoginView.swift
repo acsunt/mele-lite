@@ -98,7 +98,7 @@ struct LoginView: View {
                 .foregroundStyle(.clear)
                 .tint(.clear)
                 .frame(maxWidth: .infinity, minHeight: 58)
-                .onChange(of: code) { _, new in
+                .onChange(of: code) { new in
                     let clean = String(new.filter(\.isNumber).prefix(6))
                     if clean != new { code = clean }
                     if clean.count == 6 { submit() }

@@ -314,8 +314,14 @@ struct AlbumAddSheet: View {
                         .frame(maxWidth: .infinity, minHeight: 90, alignment: .topLeading)
                         .background(RoundedRectangle(cornerRadius: Radii.control, style: .continuous).fill(Color.white.opacity(0.55)))
                     if model.companions.count > 1 {
-                        Picker("给谁看", selection: Binding(get: { to ?? model.companions.first?.id }, set: { to = $0 })) {
-                            ForEach(model.companions) { c in Text(c.name).tag(Optional(c.id)) }
+                        // 拆开写：Binding(get:set:) + tag 三目在一起编译器要猜半天（Xcode 26 降到 16 目标后超时）
+                        let binding: Binding<UUID> = Binding(
+                            get: { self.to ?? model.companions.first?.id ?? UUID() },
+                            set: { self.to = $0 })
+                        Picker("给谁看", selection: binding) {
+                            ForEach(model.companions) { c in
+                                Text(c.name).tag(Optional(c.id))
+                            }
                         }
                         .pickerStyle(.menu)
                     }
@@ -335,7 +341,7 @@ struct AlbumAddSheet: View {
                         .disabled(images.isEmpty || sending)
                 }
             }
-            .onChange(of: picks) { _, items in
+            .onChange(of: picks) { items in
                 Task {
                     for item in items {
                         if let raw = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: raw) {

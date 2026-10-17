@@ -557,7 +557,7 @@ struct AddCompanionView: View {
         .sheet(item: $cardFile) { f in
             CardImportView(file: f) { dismiss() }.environmentObject(model).environmentObject(theme)
         }
-        .onChange(of: picked) { _, item in
+        .onChange(of: picked) { item in
             Task {
                 if let data = try? await item?.loadTransferable(type: Data.self), let img = UIImage(data: data) {
                     avatar = img.squareCropped(to: 512)

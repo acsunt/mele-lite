@@ -68,7 +68,7 @@ struct HomeView: View {
             guard CoachTour.pending(CoachTour.homeKey), !CoachTour.pending(CoachTour.chatKey), model.chat == nil else { return }
             Task { try? await Task.sleep(for: .seconds(0.8)); withAnimation { showTour = true } }
         }
-        .onChange(of: model.chat) { _, c in
+        .onChange(of: model.chat) { c in
             guard c == nil, CoachTour.pending(CoachTour.homeKey), !CoachTour.pending(CoachTour.chatKey) else { return }
             Task { try? await Task.sleep(for: .seconds(0.8)); withAnimation { showTour = true } }
         }

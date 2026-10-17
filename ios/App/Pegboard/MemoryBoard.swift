@@ -221,7 +221,7 @@ private struct PegItem: View {
             .contentShape(Rectangle())
             .rotationEffect(.degrees(tilt + (editing ? (wobble ? 1.3 : -1.3) : 0)))
             .scaleEffect(editing ? 1.02 : 1)
-            .onChange(of: editing) { _, on in
+            .onChange(of: editing) { on in
                 if on {
                     withAnimation(.easeInOut(duration: 0.14).repeatForever(autoreverses: true)) { wobble = true }
                 } else {

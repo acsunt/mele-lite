@@ -16,3 +16,15 @@ extension ContentTransition {
         return .identity
     }
 }
+
+extension View {
+    /// iOS17/18 的 containerBackground(_:for: .navigation)；16 上没有这个概念，什么都不做
+    @ViewBuilder
+    func containerBackgroundCompat<S: ShapeStyle>(_ style: S) -> some View {
+        if #available(iOS 17.0, *) {
+            self.containerBackground(style, for: .navigation)
+        } else {
+            self
+        }
+    }
+}

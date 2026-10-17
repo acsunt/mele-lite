@@ -58,9 +58,10 @@ struct StarButtonArt: View {
                 if i == 0 { star.move(to: pt) } else { star.addLine(to: pt) }
             }
             star.closeSubpath()
-            let round = star.strokedPath(StrokeStyle(lineWidth: s * 0.12, lineCap: .round, lineJoin: .round)).union(star)
-            ctx.fill(round, with: .color(theme.wash(0.72)))
-            ctx.stroke(round, with: .color(theme.wash(0.45)), lineWidth: 0.8)
+            // 17 的 union(strokedPath, path) 16 没有：先用宽线描出外圈（=union 区域），再填内部，再细勾边
+            ctx.stroke(star, with: .color(theme.wash(0.72)), style: StrokeStyle(lineWidth: s * 0.12, lineCap: .round, lineJoin: .round))
+            ctx.fill(star, with: .color(theme.wash(0.72)))
+            ctx.stroke(star, with: .color(theme.wash(0.45)), lineWidth: 0.8)
             for (dx, dy) in [(-1, -1), (1, -1), (-1, 1), (1, 1)] as [(CGFloat, CGFloat)] {
                 let h = CGRect(x: c.x + dx * s * 0.07 - s * 0.045, y: c.y + 0.03 * s + dy * s * 0.07 - s * 0.045, width: s * 0.09, height: s * 0.09)
                 ctx.fill(Path(ellipseIn: h), with: .color(theme.wash(0.96)))
@@ -83,9 +84,9 @@ struct RotaryPhoneArt: View {
             var base = Path()
             base.move(to: CGPoint(x: 14, y: 26)); base.addLine(to: CGPoint(x: 58, y: 26))
             base.addLine(to: CGPoint(x: 66, y: 54)); base.addLine(to: CGPoint(x: 6, y: 54)); base.closeSubpath()
-            let body = base.strokedPath(StrokeStyle(lineWidth: 5, lineJoin: .round)).union(base)
-            ctx.fill(body, with: .color(theme.wash(0.9)))
-            ctx.stroke(body, with: .color(line), lineWidth: 0.9)
+            ctx.stroke(base, with: .color(theme.wash(0.9)), style: StrokeStyle(lineWidth: 5, lineJoin: .round))
+            ctx.fill(base, with: .color(theme.wash(0.9)))
+            ctx.stroke(base, with: .color(line), lineWidth: 0.9)
             // 听筒
             var h = Path()
             h.addRoundedRect(in: CGRect(x: 6, y: 13, width: 60, height: 8), cornerSize: CGSize(width: 4, height: 4))

@@ -218,7 +218,7 @@ struct AddFriendSheet: View {
         .padding(24)
         .background(AppBackground().ignoresSafeArea())
         .onAppear { alt = preselected ?? model.alts.last }
-        .onChange(of: alt) { _, a in greeting = a.map { String(localized: "我是\($0.userName)") } ?? "" }
+        .onChange(of: alt) { a in greeting = a.map { String(localized: "我是\($0.userName)") } ?? "" }
     }
 
     private var altPicker: some View {

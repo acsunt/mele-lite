@@ -82,7 +82,7 @@ struct AppearanceCard: View {
                     .padding(.vertical, 2)
                 }
             }
-            .onChange(of: picked) { _, item in
+            .onChange(of: picked) { item in
                 guard let item else { return }
                 Task {
                     if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data),

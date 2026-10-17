@@ -164,8 +164,8 @@ struct WidgetWall: View {
             }
             if editing { addTile }
         }
-        .onChange(of: slots) { _, s in WidgetLayout.save(s) }
-        .onChange(of: editing) { _, on in
+        .onChange(of: slots) { s in WidgetLayout.save(s) }
+        .onChange(of: editing) { on in
             if on { withAnimation(.easeInOut(duration: 0.13).repeatForever(autoreverses: true)) { wiggle = true } }
             else { wiggle = false }
         }

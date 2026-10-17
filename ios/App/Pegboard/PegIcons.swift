@@ -97,13 +97,12 @@ struct LetterIcon: View {
 
     /// 邮票：方框四边每隔 step 咬掉一个半圆（齿孔）
     static func stampPath(_ r: CGRect, bite: CGFloat, step: CGFloat) -> Path {
-        var holes = Path()
-        func hole(_ x: CGFloat, _ y: CGFloat) { holes.addEllipse(in: CGRect(x: x - bite, y: y - bite, width: bite * 2, height: bite * 2)) }
+        var holes: [(CGPoint, CGFloat)] = []
         var x = r.minX + bite
-        while x <= r.maxX - bite + 0.1 { hole(x, r.minY); hole(x, r.maxY); x += step }
+        while x <= r.maxX - bite + 0.1 { holes.append((CGPoint(x: x, y: r.minY), bite)); holes.append((CGPoint(x: x, y: r.maxY), bite)); x += step }
         var y = r.minY + bite
-        while y <= r.maxY - bite + 0.1 { hole(r.minX, y); hole(r.maxX, y); y += step }
-        return Path(r).subtracting(holes)
+        while y <= r.maxY - bite + 0.1 { holes.append((CGPoint(x: r.minX, y: y), bite)); holes.append((CGPoint(x: r.maxX, y: y), bite)); y += step }
+        return Path.rectSubtractingCircles16(r, holes: holes)
     }
 }
 
